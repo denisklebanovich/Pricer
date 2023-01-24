@@ -22,9 +22,9 @@ jobs:
     # changes paths to json resources to include '/pricer' to match GitHub Pages repository subdirectory
     # TODO: these paths need to come from config file instead
     - name: change path to configuration resource from / to pricer
-      run: sed -i 's/"\/configuration.json"/"\/pricer\/configuration.json"/g' release/Update.fs
+      run: sed -i 's/"\/configuration.json"/"\/pricer\/configuration.json"/g' Update.fs
     - name: change path to marketData resource from / to pricer
-      run: sed -i 's/"\/marketDataConfig.json"/"\/pricer\/marketDataConfig.json"/g' release/Update.fs
+      run: sed -i 's/"\/marketDataConfig.json"/"\/pricer\/marketDataConfig.json"/g' Update.fs
 
     # publishes Blazor project to the release-folder
     - name: Publish .NET Project
