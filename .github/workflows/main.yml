@@ -19,6 +19,13 @@ jobs:
       with:
         dotnet-version: '7.0.x'
 
+    # changes paths to json resources to include '/pricer' to match GitHub Pages repository subdirectory
+    # TODO: these paths need to come from config file instead
+    - name: change path to configuration resource from / to pricer
+      run: sed -i 's/"\/configuration.json"/"\/pricer\/configuration.json"' release/Update.fs
+    - name: change path to marketData resource from / to pricer
+      run: sed -i 's/"\/marketDataConfig.json"/"\/pricer\/marketDataConfig.json"' release/Update.fs
+
     # publishes Blazor project to the release-folder
     - name: Publish .NET Project
       run: dotnet publish Pricer.fsproj -c Release -o release --nologo
