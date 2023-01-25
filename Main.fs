@@ -20,5 +20,5 @@ type MyApp() =
 
     override this.Program =
         let update = update this.HttpClient
-        Program.mkProgram (fun _ -> Model.Default, Cmd.ofMsg GetConfig ) update (view router)
+        Program.mkProgram (fun _ -> Model.Initial, Cmd.ofMsg LoadData ) update (view router)
         |> Program.withRouter router

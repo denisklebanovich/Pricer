@@ -11,7 +11,7 @@ open System.Net.Http.Json
 open Trades
 open Valuation
 
-let changeTrade (trades : Map<Guid,UITrade>) id f =
+let changeTrade (trades : Map<TradeID,UITrade>) id f =
         match Map.tryFind id trades with
         | Some t -> 
             match f t with
@@ -61,8 +61,8 @@ let update (http: HttpClient) message model =
         let newPayment = Trades.wrap (Payment <| PaymentRecord.Random(model.configuration))
         let newTrades = Map.add newPayment.id newPayment model.trades
         { model with trades = newTrades }, Cmd.none
-    | RemoveTrade(guid) ->
-        let newTrades = Map.remove guid model.trades
+    | RemoveTrade(tradeId) ->
+        let newTrades = Map.remove tradeId model.trades
         { model with trades = newTrades }, Cmd.none
     | TradeChange msg ->
         let newTrades,cmd = tradeChangeUpdate model msg
@@ -83,7 +83,7 @@ let update (http: HttpClient) message model =
                             sprintf "%s::%s" cat.Category k, v))
                 |> Map.ofArray
         { model with marketData = c }, Cmd.none
-    | GetConfig ->
+    | LoadData ->
         let getConfig() = http.GetFromJsonAsync<JsonConfig>("/configuration.json")
         let conf = Cmd.OfTask.either getConfig () GotConfig Error
         let getMDConfig() = http.GetFromJsonAsync<JsonConfig>("/marketDataConfig.json")

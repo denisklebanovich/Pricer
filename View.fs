@@ -78,16 +78,16 @@ let summary (model: Model) dispatch =
         .Rows(forEach groupedByCCy summaryRow)
         .Elt()
 
-let paymentRow dispatch (guid, p : PaymentRecord) =
+let paymentRow dispatch (tradeId, p : PaymentRecord) =
     let value = p.Value |> Option.map (string) |> Option.defaultValue "" 
-    let tradeChange msg s = dispatch <| TradeChange (msg (guid,s))
+    let tradeChange msg s = dispatch <| TradeChange (msg (tradeId,s))
     Templates.PaymentsRow()
         .Name(p.TradeName,tradeChange NewName)
         .Expiry(sprintf "%A" p.Expiry, tradeChange NewExpiry)
         .Currency(p.Currency, tradeChange NewCurrency)
         .Principal(sprintf "%i" p.Principal, tradeChange NewPrincipal)
         .Value(value)
-        .Delete(fun e -> dispatch (RemoveTrade guid))
+        .Delete(fun e -> dispatch (RemoveTrade tradeId))
         .Elt()
 
 let homePage (model: Model) dispatch =

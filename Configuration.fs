@@ -14,11 +14,3 @@ type ConfigurationRecord =
 
 type Configuration = Map<ConfigKey, ConfigValue>
 type MarketData = Map<ConfigKey, ConfigValue>
-
-let defaultMarketData =
-    [ 
-        "FX::USDPLN","3.76"
-        "FX::PLNUSD","0.3"
-        "FX::USDEUR","0.95"
-        "FX::EURGBP","0.9"
-    ] |> Map.ofList

@@ -10,7 +10,7 @@ open Chart
 type UITrade = 
      {
           trade : Trade
-          id : Guid
+          id : TradeID
      }
      member this.Name =
           match this.trade with
@@ -25,14 +25,14 @@ type Page =
 type Model =
     {
         page: Page
-        trades : Map<Guid,UITrade>
+        trades : Map<TradeID,UITrade>
         marketData: MarketData
         configuration : Configuration
         chart : ChartData
         error: string option
     }
 
-    static member Default = 
+    static member Initial = 
       {
           page = Home
           trades = Map.empty
@@ -44,7 +44,7 @@ type Model =
 
 module Trades =
   let wrap t  =
-      { trade = t; id = Guid.NewGuid() }
+      { trade = t; id = newTradeID() }
 
   let map f t = { t with trade = f t.trade }
 
