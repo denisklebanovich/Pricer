@@ -5,6 +5,7 @@ open Elmish
 open Messages
 open Model
 open Payment
+open EuropeanOption
 open System
 open System.Net.Http
 open System.Net.Http.Json
@@ -24,8 +25,10 @@ let tradeChangeUpdate (model : Model) = function
         changeTrade model.trades id 
                 (Trades.tryMap ( function
                                 | Payment p -> Some <| Payment { p with TradeName = name}
+                                | EuropeanOption eo -> Some <| EuropeanOption { eo with TradeName = name}
                             )
             )
+
     | NewPrincipal (id,principal) ->
         changeTrade model.trades id 
                 (Trades.tryMap ( function
@@ -34,6 +37,7 @@ let tradeChangeUpdate (model : Model) = function
                                     |> Utils.ofBool
                                     |> Option.map (fun principal ->
                                             Payment { p with Principal = principal})
+                                | _ -> None
                             )
             )
 
@@ -45,13 +49,77 @@ let tradeChangeUpdate (model : Model) = function
                                     |> Utils.ofBool
                                     |> Option.map (fun expiry ->
                                             Payment { p with Expiry = expiry})
+                                | EuropeanOption eo -> 
+                                    DateTime.TryParse(expiry)
+                                    |> Utils.ofBool
+                                    |> Option.map (fun expiry ->
+                                            EuropeanOption { eo with Expiry = expiry})
                             )
             )
 
     | NewCurrency (id,ccy) ->
         changeTrade model.trades id 
                 (Trades.tryMap ( function
-                                | Payment p -> Some <| Payment { p with Currency = ccy}))
+                                | Payment p -> Some <| Payment { p with Currency = ccy}
+                                | EuropeanOption eo -> Some <| EuropeanOption { eo with Currency = ccy}))
+
+    | NewSpotPrice (id,spot) ->
+        changeTrade model.trades id 
+                (Trades.tryMap ( function
+                                | EuropeanOption eo -> 
+                                    Double.TryParse(spot)
+                                    |> Utils.ofBool
+                                    |> Option.map (fun spot ->
+                                            EuropeanOption { eo with SpotPrice = spot})
+                                | _ -> None))
+
+    | NewStrike (id,strike) ->
+        changeTrade model.trades id 
+                (Trades.tryMap ( function
+                                | EuropeanOption eo -> 
+                                    Double.TryParse(strike)
+                                    |> Utils.ofBool
+                                    |> Option.map (fun strike ->
+                                            EuropeanOption { eo with Strike = strike})
+                                | _ -> None))
+
+    | NewDrift (id,drift) ->
+        changeTrade model.trades id 
+                (Trades.tryMap ( function
+                                | EuropeanOption eo -> 
+                                    Double.TryParse(drift)
+                                    |> Utils.ofBool
+                                    |> Option.map (fun drift ->
+                                            EuropeanOption { eo with Drift = drift})
+                                | _ -> None))
+
+    | NewVolatility (id,volatility) ->
+        changeTrade model.trades id 
+                (Trades.tryMap ( function
+                                | EuropeanOption eo -> 
+                                    Double.TryParse(volatility)
+                                    |> Utils.ofBool
+                                    |> Option.map (fun volatility ->
+                                            EuropeanOption { eo with Volatility = volatility})
+                                | _ -> None))
+
+    | NewValuationMethod (id,valuationMethod) ->
+        changeTrade model.trades id 
+                (Trades.tryMap ( function
+                                | EuropeanOption eo ->
+                                    parseValuationMethod valuationMethod
+                                    |> Option.map (fun valuationMethod ->
+                                            EuropeanOption { eo with ValuationMethod = valuationMethod})
+                                | _ -> None))
+    | NewOptionType (id,optionType) ->
+        changeTrade model.trades id 
+                (Trades.tryMap ( function
+                                | EuropeanOption eo ->
+                                    parseOptionType optionType
+                                    |> Option.map (fun optionType ->
+                                            EuropeanOption { eo with OptionType = optionType})
+                                | _ -> None))
+                                    
 
 let update (http: HttpClient) message model =
     match message with
@@ -60,6 +128,10 @@ let update (http: HttpClient) message model =
     | AddPayment ->
         let newPayment = Trades.wrap (Payment <| PaymentRecord.Random(model.configuration))
         let newTrades = Map.add newPayment.id newPayment model.trades
+        { model with trades = newTrades }, Cmd.none
+    | AddEuropeanOption ->
+        let newOption = Trades.wrap (EuropeanOption <| EuropeanOptionRecord.Random(model.configuration))
+        let newTrades = Map.add newOption.id newOption model.trades
         { model with trades = newTrades }, Cmd.none
     | RemoveTrade(tradeId) ->
         let newTrades = Map.remove tradeId model.trades

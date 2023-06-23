@@ -11,11 +11,18 @@ type TradeChangeMsg =
     | NewPrincipal of TradeID * string
     | NewCurrency of TradeID * string
     | NewExpiry of TradeID * string
+    | NewSpotPrice of TradeID * string
+    | NewStrike of TradeID * string
+    | NewDrift of TradeID * string
+    | NewVolatility of TradeID * string
+    | NewValuationMethod of TradeID * string
+    | NewOptionType of TradeID * string
 
 /// The Elmish application's update messages.
 type Message =
     | SetPage of Page
     | AddPayment
+    | AddEuropeanOption
     | RemoveTrade of TradeID
     | TradeChange of TradeChangeMsg
     | RecalculateAll

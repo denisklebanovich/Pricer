@@ -1,96 +1,166 @@
 <div class="templates">
 
-  <template id="Trades">
-    <div class="content">
-    <h1 class="title">Payments</h1>
-    <button class="rz-button rz-secondary rz-ripple rz-border-radius-1"
-            onclick="${RecalculateAll}">Recalculate All</button>
-    <button class="rz-button rz-secondary rz-ripple rz-border-radius-1"
-            onclick="${AddPayment}">Add New</button>
-    <table class="rz-grid-table">
-      <tbody>
-        <tr>
-          <th></th>
-          <th style="width: 19%;">Name</th>
-          <th style="width: 19%;">Expiry</th>
-          <th style="width: 19%;">Currency</th>
-          <th style="width: 19%;">Principal</th>
-          <th style="width: 19%;">Value</th>
-        </tr>
-        <template id="PaymentsRow">
-          <tr>
-            <td><button class="rz-button rz-ripple rz-border-radius-1"
-                        onclick="${Delete}">X</button></td>
-            <td><input bind-onchange="${Name}"/></td>
-            <td><input bind-onchange="${Expiry}"/></td>
-            <td><input bind-onchange="${Currency}"/></td>
-            <td><input bind-onchange="${Principal}"/></td>
-            <td>${Value}</td>
-          </tr>
-        </template>
-        ${PaymentRows}
-      </tbody>
-    </table>
-    </div>
-  </template>
+    <template id="Payments">
+        <div class="content">
+            <h1 class="title">Payments</h1>
+            <button class="rz-button rz-secondary rz-ripple rz-border-radius-1"
+                    onclick="${RecalculateAll}">Recalculate All
+            </button>
+            <button class="rz-button rz-secondary rz-ripple rz-border-radius-1"
+                    onclick="${AddPayment}">Add New
+            </button>
+            <table class="rz-grid-table">
+                <tbody>
+                <tr>
+                    <th></th>
+                    <th style="width: 19%;">Name</th>
+                    <th style="width: 19%;">Expiry</th>
+                    <th style="width: 19%;">Currency</th>
+                    <th style="width: 19%;">Principal</th>
+                    <th style="width: 19%;">Value</th>
+                </tr>
+                <template id="PaymentsRow">
+                    <tr>
+                        <td>
+                            <button class="rz-button rz-ripple rz-border-radius-1"
+                                    onclick="${Delete}">X
+                            </button>
+                        </td>
+                        <td><input bind-onchange="${Name}"/></td>
+                        <td><input bind-onchange="${Expiry}"/></td>
+                        <td><input bind-onchange="${Currency}"/></td>
+                        <td><input bind-onchange="${Principal}"/></td>
+                        <td>${Value}</td>
+                    </tr>
+                </template>
+                ${PaymentRows}
+                </tbody>
+            </table>
+        </div>
+    </template>
 
-  <template id="Summary">
-    <div class="content">
-    <h1 class="title">Summary</h1>
-    <table class="rz-grid-table">
-      <tbody>
-        <tr>
-          <th style="width: 30%;">Currency</th>
-          <th>Value</th>
-        </tr>
-        ${Rows}
-        <template id="SummaryRow">
-          <tr>
-            <td>${CCY}</td>
-            <td>${Value}</td>
-          </tr>
-        </template>
-      </tbody>
-    </table>
-    </div>
-  </template>
+    <template id="EuropeanOptions">
+        <div class="content">
+            <h1 class="title">European Options</h1>
+            <button class="rz-button rz-secondary rz-ripple rz-border-radius-1"
+                    onclick="${RecalculateAll}">Recalculate All
+            </button>
+            <button class="rz-button rz-secondary rz-ripple rz-border-radius-1"
+                    onclick="${AddEuropeanOption}">Add New
+            </button>
+            <table class="rz-grid-table">
+                <tbody>
+                <tr>
+                    <th></th>
+                    <th style="width: 9%;">Name</th>
+                    <th style="width: 9%;">Spot</th>
+                    <th style="width: 9%;">Strike</th>
+                    <th style="width: 9%;">Drift(%)</th>
+                    <th style="width: 9%;">Volatility(%)</th>
+                    <th style="width: 9%;">Expiry</th>
+                    <th style="width: 9%;">Currency</th>
+                    <th style="width: 9%;">Val. Method</th>
+                    <th style="width: 9%;">Option Type</th>
+                    <th style="width: 9%;">Value</th>
+                    <th style="width: 9%;">Delta</th>
+                </tr>
+                <template id="EuropeanOptionsRows">
+                    <tr>
+                        <td>
+                            <button class="rz-button rz-ripple rz-border-radius-1"
+                                    onclick="${Delete}">X
+                            </button>
+                        </td>
+                        <td><input bind-onchange="${Name}" style="width: 120px;"/></td>
+                        <td><input bind-onchange="${Spot}" style="width: 60px;"/></td>
+                        <td><input bind-onchange="${Strike}" style="width: 60px;"/></td>
+                        <td><input bind-onchange="${Drift}" style="width: 50px;"/></td>
+                        <td><input bind-onchange="${Volatility}" style="width: 50px;"/></td>
+                        <td><input bind-onchange="${Expiry}" style="width: 100px;"/></td>
+                        <td><input bind-onchange="${Currency}" style="width: 35px;"/></td>
+                        <td>
+                            <select bind-onchange="${ValuationMethod}" style="width: 120px;">
+                                <option value="Analytical">Analytical</option>
+                                <option value="MonteCarlo">Monte Carlo</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select bind-onchange="${OptionType}" style="width: 70px;">
+                                <option value="Call">Call</option>
+                                <option value="Put">Put</option>
+                            </select>
+                        </td>
+                        <td>${Value}</td>
+                        <td>${Delta}</td>
+                    </tr>
+                </template>
+                ${EuropeanOptionsRows}
+                </tbody>
+            </table>
+        </div>
+    </template>
 
 
-  <template id="KeyValueMapDisplay">
-    <div class="content">
-    <h1 class="title">${Title}</h1>
-    <table class="rz-grid-table">
-      <tbody>
-        <tr>
-          <th>Key</th>
-          <th>Value</th>
-        </tr>
-        ${Rows}
-        <template id="ConfigRow">
-          <tr>
-            <td>${Key}</td>
-            <td><input bind-onchange="${Value}"/></td>
-          </tr>
-        </template>
-      </tbody>
-    </table>
-    </div>
-  </template>
+    <template id="Summary">
+        <div class="content">
+            <h1 class="title">Summary</h1>
+            <table class="rz-grid-table">
+                <tbody>
+                <tr>
+                    <th style="width: 30%;">Currency</th>
+                    <th>Value</th>
+                </tr>
+                ${Rows}
+                <template id="SummaryRow">
+                    <tr>
+                        <td>${CCY}</td>
+                        <td>${Value}</td>
+                    </tr>
+                </template>
+                </tbody>
+            </table>
+        </div>
+    </template>
 
-  <template id="Home">
-    <div class="content">
-      ${SummaryPlaceholder}
-      ${TradesPlaceholder}
-      ${MarketDataPlaceholder}
-      ${ChartsPlaceholder}
-    </div>
-  </template>
 
-  <template id="ErrorNotification">
-    <div class="notification is-warning">
-      <button class="delete ${HideClass}" onclick="${Hide}"></button>
-      ${Text}
-    </div>
-  </template>
+    <template id="KeyValueMapDisplay">
+        <div class="content">
+            <h1 class="title">${Title}</h1>
+            <table class="rz-grid-table">
+                <tbody>
+                <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                </tr>
+                ${Rows}
+                <template id="ConfigRow">
+                    <tr>
+                        <td>${Key}</td>
+                        <td><input bind-onchange="${Value}"/></td>
+                    </tr>
+                </template>
+                </tbody>
+            </table>
+        </div>
+    </template>
+
+    <template id="Home">
+        <div class="content">
+            ${SummaryPlaceholder}
+            ${PaymentsPlaceholder}
+            ${EuropeanOptionsPlaceholder}
+            ${MarketDataPlaceholder}
+            ${ChartsPlaceholder}
+        </div>
+    </template>
+
+    <template id="ErrorNotification">
+        <div class="notification is-warning">
+            <button class="delete ${HideClass}" onclick="${Hide}"></button>
+            ${Text}
+        </div>
+    </template>
+
+</div>
 
 </div>
