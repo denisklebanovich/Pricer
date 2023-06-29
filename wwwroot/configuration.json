@@ -10,6 +10,16 @@
     ]
   },
   {
+    "category": "binomialTree",
+    "config":
+    [
+      {
+        "key":"steps",
+        "value":"100"
+      }
+    ]
+  },
+  {
     "category":"valuation",
     "config":
     [

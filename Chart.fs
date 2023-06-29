@@ -4,6 +4,7 @@ open EuropeanOption
 open Radzen.Blazor
 open System
 open Configuration
+
 type ChartItem = { XValue: float; YValue: float }
 
 type Series =
@@ -65,5 +66,35 @@ let mkDummyChart () : ChartData =
         Series = [| mkDummySeries (); mkDummySeries () |]
         Title = "Dummy Demo Chart" }
 
-let europeanOptionsPayoffChart() : ChartData =
-    let europeanOptions = EuropeanOption.europeanOptions()
+let mkOptionsValuesChart (options: List<EuropeanOptionValuationInputs>) : ChartData =
+    // Define final stock prices
+    let finalStockPrices = [ 50.0..2.0..150.0 ]
+
+    // Calculate option values for different stock prices
+    let calcValues (optionInputs: EuropeanOptionValuationInputs) =
+        let model = EuropeanOptionValuationModel(optionInputs)
+
+        finalStockPrices
+        |> List.map (fun s -> fst (model.calculateWithDifferentSpotPrice s))
+
+    // Generate data for the plot
+    let series =
+        options
+        |> List.map (fun optionInputs ->
+            // Prepare sequence of (x, y) values
+            let valuesSeq = Seq.zip finalStockPrices (calcValues optionInputs)
+
+            // Map those to ChartItem
+            let valuesArray =
+                valuesSeq |> Seq.map (fun (x, y) -> { XValue = x; YValue = y }) |> Array.ofSeq
+
+            // Customize the series
+            { Series.Default with
+                Values = valuesArray
+                SeriesName = sprintf "Option %s Value" optionInputs.Trade.TradeName })
+        |> Array.ofList
+
+    // Add or replace series on existing chart
+    { ChartData.Default with
+        Series = series
+        Title = "Option Value vs Stock Price" }

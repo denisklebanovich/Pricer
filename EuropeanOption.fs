@@ -19,11 +19,13 @@ let parseOptionType (input: string) =
 type ValuationMethod =
     | Analytical
     | MonteCarlo
+    | Binomial
 
 let parseValuationMethod (input: string) =
     match input with
     | "Analytical" -> Some Analytical
     | "MonteCarlo" -> Some MonteCarlo
+    | "Binomial" -> Some Binomial
     | _ -> None
 
 (* Model for European Option trade. *)
@@ -71,12 +73,7 @@ type EuropeanOptionValuationInputs =
       MarketData: MarketData }
 
 type EuropeanOptionValuationModel(inputs: EuropeanOptionValuationInputs) =
-    member private this.valuationMethods =
-        dict<ValuationMethod * OptionType, float * float>
-            [ (Analytical, Call), this.calculateEuropeanOption
-              (Analytical, Put), this.calculateEuropeanOption
-              (MonteCarlo, Call), this.MonteCarloSimulation
-              (MonteCarlo, Put), this.MonteCarloSimulation ]
+             
 
     member this.drift = inputs.Trade.Drift / 100.0
     member this.volatility = inputs.Trade.Volatility / 100.0
@@ -114,26 +111,17 @@ type EuropeanOptionValuationModel(inputs: EuropeanOptionValuationInputs) =
         partOfYear
 
     member private this.calculateD1Formula() : float =
-        //print inputs
-        printfn $"SpotPrice: %f{inputs.Trade.SpotPrice}"
-        printfn $"Strike: %f{inputs.Trade.Strike}"
-        printfn $"Drift: %f{this.drift}"
-        printfn $"Volatility: %f{this.volatility}"
-        printfn $"Time: %f{this.time}"
-
         let numerator =
             log (inputs.Trade.SpotPrice / inputs.Trade.Strike)
             + (this.drift + 0.5 * this.volatility ** 2.0) * this.time
 
         let denominator = this.volatility * sqrt this.time
-        printf $"D1: %f{numerator / denominator}"
         numerator / denominator
 
 
-    member private this.calculateEuropeanOption : float * float =
+    member private this.BlackScholesSimulation() : float * float =
         let d1 = this.calculateD1Formula()
         let d2 = d1 - this.volatility * sqrt this.time
-        printfn $"D2: %f{d2}"
         let d1CDF, d2CDF = Normal.CDF(0.0, 1.0, d1), Normal.CDF(0.0, 1.0, d2)
         let exp = exp (-1.0 * this.drift * this.time)
 
@@ -150,22 +138,81 @@ type EuropeanOptionValuationModel(inputs: EuropeanOptionValuationInputs) =
             | Put -> d1CDF - 1.0
 
         payoff, delta
-
-
-    member private this.MonteCarloSimulation : float * float =
+    
+    member public this.calculateWithDifferentSpotPrice(spotPrice: float) : float * float =
+        let newTrade = { inputs.Trade with SpotPrice = spotPrice }
+        let newInputs = { inputs with Trade = newTrade }
+        let model = EuropeanOptionValuationModel(newInputs)
+        model.BlackScholesSimulation()
+    member private this.MonteCarloSimulation() : float * float =
         let runs = inputs.MarketData["monteCarlo::runs"] |> int
-        printfn $"Monte Carlo runs: %d{runs}"
-        let normal = Normal(inputs.Trade.SpotPrice, inputs.Trade.Volatility)
+        let normal = Normal(0.0, 1.0)
         let randomNumbers = Array.init runs (fun _ -> normal.Sample())
+        let bump = inputs.MarketData["methodology::bumpSize"] |> float
 
-        let payoffs =
-            randomNumbers
-            |> Array.map (fun x -> max (x - inputs.Trade.Strike) 0.0)
-            |> Array.map (fun x -> x * exp (-this.drift * this.time))
+        let calculateAveragePayoff (spotPrice: float) : float =
+            let mutable totalPayoff = 0.0
+            for i in 0..runs - 1 do
+                let stochasticTerm = this.drift * this.time + this.volatility * sqrt(this.time) * randomNumbers[i]
+                let stockPrice = spotPrice * exp(stochasticTerm)
 
-        let averagePayoff = Array.average payoffs
-        let delta = averagePayoff / inputs.Trade.SpotPrice
+                let payoff =
+                    match inputs.Trade.OptionType with
+                    | Call -> max (stockPrice - inputs.Trade.Strike) 0.0
+                    | Put -> max (inputs.Trade.Strike - stockPrice) 0.0
+
+                let discountedPayoff = payoff * exp(-this.drift * this.time)
+                totalPayoff <- totalPayoff + discountedPayoff
+            totalPayoff / float runs
+
+        let spotPrice = inputs.Trade.SpotPrice
+        let averagePayoff = calculateAveragePayoff spotPrice
+        let averagePayoffBumpedUp = calculateAveragePayoff (spotPrice + bump)
+        let averagePayoffBumpedDown = calculateAveragePayoff (spotPrice - bump)
+        let delta = (averagePayoffBumpedUp - averagePayoffBumpedDown) / (2.0 * bump)
+
         averagePayoff, delta
+    
+    member private this.BinomialTreeSimulation() : float * float =
+        let steps = inputs.MarketData["monteCarlo::runs"] |> int
+        let dt = this.time / float steps
+        let u = exp(this.volatility * sqrt dt)
+        let d = 1.0 / u
+        let p = (exp(this.drift * dt) - d) / (u - d)
+        let disc = exp(-this.drift * dt)
+        let bump = inputs.MarketData["methodology::bumpSize"] |> float
+
+        let createOptionTree (spotPrice: float) =
+            let stockTree = Array2D.zeroCreate (steps + 1) (steps + 1)
+            for i in 0..steps do
+                for j in 0..i do
+                    stockTree[i, j] <- spotPrice * Math.Pow(u, float j) * Math.Pow(d, float (i - j))
+
+            let optionTree = Array2D.zeroCreate (steps + 1) (steps + 1)
+            for j in 0..steps do
+                let stockPrice = stockTree[steps, j]
+                optionTree[steps, j] <- 
+                    match inputs.Trade.OptionType with
+                    | Call -> max (stockPrice - inputs.Trade.Strike) 0.0
+                    | Put -> max (inputs.Trade.Strike - stockPrice) 0.0
+
+            for i in [steps - 1.. -1 ..0] do
+                for j in 0..i do
+                    let expectedValue = disc * (p * optionTree[i + 1, j + 1] + (1.0 - p) * optionTree[i + 1, j])
+                    optionTree[i, j] <- expectedValue
+
+            optionTree[0, 0]
+
+        let optionPrice = createOptionTree inputs.Trade.SpotPrice
+
+        // Delta calculation
+        let upPrice = inputs.Trade.SpotPrice * (1.0 + bump)
+        let downPrice = inputs.Trade.SpotPrice * (1.0 - bump)
+        let upOptionPrice = createOptionTree upPrice
+        let downOptionPrice = createOptionTree downPrice
+        let delta = (upOptionPrice - downOptionPrice) / (2.0 * bump * inputs.Trade.SpotPrice)
+
+        optionPrice, delta
 
 
 
@@ -173,8 +220,10 @@ type EuropeanOptionValuationModel(inputs: EuropeanOptionValuationInputs) =
     member this.Calculate() : Money * Money =
         let fxRate, finalCcy = this.PrepareCurrencies()
 
-        let payoff, delta =
-            this.valuationMethods.Item ((inputs.Trade.ValuationMethod, inputs.Trade.OptionType))
+        let payoff, delta = match inputs.Trade.ValuationMethod with
+                            | Analytical -> this.BlackScholesSimulation()
+                            | MonteCarlo -> this.MonteCarloSimulation()
+                            | Binomial -> this.BinomialTreeSimulation()
 
         { Value = payoff / fxRate
           Currency = finalCcy },

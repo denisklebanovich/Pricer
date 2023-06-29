@@ -36,7 +36,7 @@ type Model =
           trades = Map.empty
           marketData = Map.empty
           configuration = Map.empty
-          chart = mkDummyChart () //TODO: change to some actual data
+          chart = mkDummyChart ()
           error = None }
 
 module Trades =
