@@ -55,11 +55,11 @@ type EuropeanOptionRecord =
                 knownCurrenciesDefault
 
         { TradeName = sprintf "EuropeanOption%04d" (EuropeanOptionRecord.sysRandom.Next(9999))
-          SpotPrice = EuropeanOptionRecord.sysRandom.Next(50, 500)
-          Strike = EuropeanOptionRecord.sysRandom.Next(50, 500)
-          Drift = EuropeanOptionRecord.sysRandom.Next(0, 30)
+          SpotPrice = EuropeanOptionRecord.sysRandom.Next(50, 200)
+          Strike = EuropeanOptionRecord.sysRandom.Next(50, 200)
+          Drift = EuropeanOptionRecord.sysRandom.Next(0, 10)
           Volatility = EuropeanOptionRecord.sysRandom.Next(0, 30)
-          Expiry = DateTime.Now.AddMonths(EuropeanOptionRecord.sysRandom.Next(1, 6)).Date
+          Expiry = DateTime.Now.AddMonths(EuropeanOptionRecord.sysRandom.Next(1, 12)).Date
           Currency = knownCurrencies[EuropeanOptionRecord.sysRandom.Next(knownCurrencies.Length)]
           ValuationMethod = Analytical
           OptionType = Call
